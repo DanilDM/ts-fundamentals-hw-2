@@ -3,11 +3,11 @@ import { initRender } from "./render-functions";
 import Pagination from "./pagination";
 
 const pagination = new Pagination();
-let query = "";
-const searchForm = document.querySelector(".form");
-const loadMoreButton = document.querySelector(".load-more");
-const gallery = document.querySelector(".gallery");
-const loader = document.querySelector(".loader");
+let query: string = "";
+const searchForm = document.querySelector<HTMLFormElement>(".form");
+const loadMoreButton = document.querySelector<HTMLButtonElement>(".load-more");
+const gallery = document.querySelector<HTMLDivElement>(".gallery");
+const loader = document.querySelector<HTMLDivElement>(".loader");
 
 if (!searchForm) throw new Error("Missing .form element in HTML");
 if (!loadMoreButton) throw new Error("Missing .load-more element in HTML");
@@ -20,11 +20,19 @@ const ui = initRender({ gallery, loader, loadMoreButton });
 searchForm.addEventListener("submit", onFormSubmit);
 loadMoreButton.addEventListener("click", onLoadMoreClick);
 
-async function onFormSubmit(event) {
+async function onFormSubmit(event: SubmitEvent): Promise<void> {
   event.preventDefault();
-  const form = event.target;
+  const form = event.target as HTMLFormElement | undefined;
   const formData = new FormData(form);
-  query = formData.get("search-text").trim();
+
+  const value = formData.get("search-text");
+
+  if (typeof value !== "string") {
+    ui.showToast("Please enter a search query.");
+    return;
+  }
+
+  query = value.trim();
 
   if (query === "") {
     ui.showToast("Please enter a search query.");
@@ -35,15 +43,15 @@ async function onFormSubmit(event) {
   ui.clearGallery();
   ui.hideLoadMoreButton();
   await fetchAndRender();
-  form.reset();
+  if (form) form.reset();
 }
 
-async function onLoadMoreClick() {
+async function onLoadMoreClick(): Promise<void> {
   pagination.next();
   await fetchAndRender();
 }
 
-async function fetchAndRender() {
+async function fetchAndRender(): Promise<void> {
   const isInitial = pagination.current === 1;
   try {
     ui.showLoader();
